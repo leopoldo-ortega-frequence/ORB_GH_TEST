@@ -1,0 +1,345 @@
+
+                <script>
+              // The data buttons shouldnt fromat anything
+// All data types must be formatted on nav input finished selection
+
+// DOM selectors
+const navSettings = document.getElementById("nav-settings");
+const navToggleBtn = document.querySelector(".nav-toggle-btn");
+const settingsMenu = document.querySelector(".settings-menu");
+const settingsMenuBtn = document.querySelector(".menu-close");
+const deleteDataBtn = document.querySelector("#delete_data_btn");
+const designerSelect = document.getElementById("designer-select");
+const designInput = document.getElementById("designer-input");
+const designerInputIco = document.querySelector("#designer-input-field .input-icon");
+const userInput = document.querySelectorAll(".main-input");
+const allDataBtns = document.querySelectorAll("button.data-btn");
+const sectionContainers = document.querySelectorAll("section#overview");
+const metricsHeaderData = document.querySelectorAll(".header-dates");
+const loader = document.getElementById("loader");
+const inputDesignerInfo = document.getElementById("input-designer-info");
+const snackbar = document.getElementById("snackbar");
+const leftNavBtn = document.querySelector(".left-content-btn");
+const pdfBtn = document.querySelector("#nav-download");
+const printMenu = document.querySelector(".print-menu");
+const printForm = document.querySelector("#print-form");
+const dataTime = document.querySelector("#data_last_update");
+const designerSettings = document.querySelectorAll(
+  "input[type=radio].settings-designer"
+);
+// global states
+let dataLoader;
+let loadedDesigners;
+let metrics_data, beam_data; // stores server res data
+let filteredMetrics; // stores current designer data
+let metrics_page, quality_page, hygeine_page;
+let dataType = "metrics";
+let designerView = "new";
+let selectedInputs = {
+  start_date: "",
+  end_date: "",
+  designer: "",
+};
+// add event listeners to both date inputs
+userInput.forEach((el) => {
+  el.addEventListener("change", (event) => {
+    if (event.target.name !== "designer") {
+      selectedInputs[event.target.name] = event.target.value;
+      // run function if ALL input variables are in use
+      handleUserInput(event.target.name);
+    }
+  });
+});
+
+async function handleUserInput(event) {
+  // we want to wait for the data to be assigned/updated before we use it
+  if (event === "designer" && selectedInputs.designer !== "") {
+    const { designer_data, num_tickets_ramp, ramp_data } = metrics_data;
+    const { designer } = selectedInputs;
+    // need a function to filter data by designer name
+    filteredMetrics = designer_data.filter(
+      (item) => item["Designers"] === designer
+    );
+
+    filteredMetrics = dataLoader.handleMetrics({
+      filteredMetrics,
+      ramp_data,
+      num_tickets_ramp,
+    });
+
+    // show date ranges for selected designer
+    displayUsableData(inputDesignerInfo, filteredMetrics);
+  }
+  // can only run if data is currenly present in state, here we read the only but are not setting anything
+  if (
+    selectedInputs.start_date !== "" &&
+    selectedInputs.end_date !== "" &&
+    selectedInputs.designer !== "" &&
+    metrics_data &&
+    beam_data
+  ) {
+    const { start_date, end_date } = selectedInputs;
+    const { formattedMetricsData, formattedBeamData } =
+      dataLoader.filterDatasetByDate(
+        { filteredMetrics, beam_data },
+        start_date,
+        end_date
+      );
+    useData({ formattedMetricsData, formattedBeamData });
+    //useData({ filteredMetrics, beam_data }, start_date, end_date);
+  }
+}
+
+// clear designer input field when clicked on in order to show full dropdown option
+designInput.addEventListener("focusin", function () {
+  this.value = "";
+  // reset designers
+  populateDropdown(designerSelect, loadedDesigners);
+  // make dropdown visible
+  designerSelect.style.display = "block";
+  if (designerInputIco.classList.contains("down")) {
+    designerInputIco.classList.remove("down");
+    designerInputIco.classList.add("up");
+  }
+});
+// closes our dropwdown menu if clicked outside the region zone
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#designer-input-field")) return;
+
+  // list.classList.add('hidden')
+  designerSelect.style.display = "none";
+  if (designerInputIco.classList.contains("up")) {
+    designerInputIco.classList.remove("up");
+    designerInputIco.classList.add("down");
+  }
+});
+designInput.addEventListener("keyup", function (e) {
+  //filterDesignerDropdown(this.value)
+  populateDropdown(designerSelect, loadedDesigners, this.value);
+});
+// manually handles designer input
+designerSelect.addEventListener("click", function (e) {
+  designInput.value = e.target.getAttribute("data-value");
+  selectedInputs["designer"] = e.target.getAttribute("data-value");
+  designerSelect.style.display = "none";
+  if (designerInputIco.classList.contains("up")) {
+    designerInputIco.classList.remove("up");
+    designerInputIco.classList.add("down");
+  }
+  handleUserInput("designer");
+});
+
+// hide left nav on button click
+leftNavBtn.addEventListener("click", function () {
+  document.querySelector(".left-content").classList.toggle("hidden");
+  document.querySelector("nav").classList.toggle("full");
+  document.querySelector(".right-content").classList.toggle("full");
+  this.classList.toggle("hide");
+});
+
+// add toggle to all data buttons
+allDataBtns.forEach((el) => {
+  el.addEventListener("click", (event) => {
+    event.preventDefault();
+    const dataName = event.target.value.toLowerCase();
+    if (dataType !== dataName) {
+      // remove active class from other buttons
+      document.querySelector(`#${dataType}-btn`).classList.remove("active");
+      document.querySelector(`#${dataName}-btn`).classList.add("active");
+      // change data type
+      dataType = dataName;
+      // update hidden class
+      sectionContainers.forEach((vis) => {
+        if (vis.classList.contains(dataName)) {
+          vis.classList.remove("hidden");
+        } else {
+          if (!vis.classList.contains("hidden")) {
+            vis.classList.add("hidden");
+          }
+        }
+      });
+      // Update print menu options
+      updatePrintMenu(printForm, dataType);
+    }
+  });
+});
+
+// load and render page onload function, load all data onto the application
+window.onload = async function () {
+  handleLoading(true, loader);
+  // call/create new Loader
+  dataLoader = Loader(snackbar, displayError);
+
+  let localData = JSON.parse(window.localStorage.getItem("metrics_data"));
+  if (localData) {
+    if (
+      new Date().getTime() < getNextMonday(new Date(localData.token)).getTime()
+    ) {
+      metrics_data = localData.metrics_data;
+      beam_data = localData.beam_data;
+      dataTime.innerText = `Last updated: ${new Date(
+        localData.token
+      ).toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })}`;
+    } else {
+      metrics_data = await dataLoader.fetchMetricsData();
+      beam_data = await dataLoader.fetchBeamData();
+      window.localStorage.setItem(
+        "metrics_data",
+        JSON.stringify({
+          metrics_data,
+          beam_data,
+          token: new Date(),
+        })
+      );
+      dataTime.innerText = `Last updated: ${new Date(
+        JSON.parse(window.localStorage.getItem("metrics_data")).token
+      ).toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })}`;
+    }
+  } else {
+    metrics_data = await dataLoader.fetchMetricsData();
+    beam_data = await dataLoader.fetchBeamData();
+    window.localStorage.setItem(
+      "metrics_data",
+      JSON.stringify({
+        metrics_data,
+        beam_data,
+        token: new Date(),
+      })
+    );
+  }
+
+  handleLoading(false, loader);
+  loadedDesigners = filterNewDesigners(metrics_data.designer_data, 52);
+  populateDropdown(designerSelect, loadedDesigners);
+
+  metrics_page = Metrics();
+  quality_page = Quality();
+  // initalize DOM event listeners to application
+  initComponentToggle();
+  updatePrintMenu(printForm, dataType);
+};
+
+function getNextMonday(date) {
+  const dateCopy = new Date(date.getTime());
+
+  const nextMonday = new Date(
+    dateCopy.setDate(
+      dateCopy.getDate() + ((7 - dateCopy.getDay() + 1) % 7 || 7)
+    )
+  );
+
+  return nextMonday;
+}
+
+// this function will run if designer, startDate, and endDate have been determined
+function useData(data) {
+  const { formattedMetricsData, formattedBeamData } = data;
+  // update metrics date header
+  metricsHeaderData.forEach((el) => {
+    if (el.classList.contains("end-only")) {
+      el.innerText = `Week ${
+        formattedMetricsData[formattedMetricsData.length - 1]["Week"]
+      }`;
+    } else {
+      el.innerText = `Week ${formattedMetricsData[0]["Week"]} - Week ${
+        formattedMetricsData[formattedMetricsData.length - 1]["Week"]
+      }`;
+    }
+  });
+
+  // render metrics here
+  metrics_page.update({
+    newData: formattedMetricsData,
+    designer: selectedInputs.designer,
+  });
+  quality_page.update({
+    designer: selectedInputs.designer,
+    data: formattedBeamData,
+  });
+}
+
+// PDF GENERATOR
+pdfBtn.addEventListener("click", () => {
+  //printMenu.classList.toggle("menu-active");
+  const node = document.querySelector(`section.${dataType}`);
+
+  // domtoimage
+  //   .toPng(node)
+  //   .then(function (dataUrl) {
+  //     var img = new Image();
+  //     img.src = dataUrl;
+  //     var doc = new jsPDF();
+  //     doc.addImage(img, "PNG", -10, -30, 230, 330);
+  //     doc.save("ImgToPDF.pdf");
+  //     // document.body.appendChild(img);
+  //   })
+  //   .catch(function (error) {
+  //     console.error("oops, something went wrong!", error);
+  //   });
+
+  domtoimage
+    .toBlob(node)
+    .then(function (blob) {
+      saveAs(
+        blob,
+        `${selectedInputs.designer ? selectedInputs.designer : "node"}.png`
+      );
+    })
+    .catch(function (error) {
+      console.error("oops, something went wrong!", error);
+    });
+});
+
+// nav toggle
+navToggleBtn.addEventListener("click", function () {
+  const nav = document.querySelector("nav");
+  const container = document.querySelectorAll(
+    ".app-wrapper .right-content section .content-container"
+  );
+
+  nav.classList.toggle("nav-hide");
+  //container.classList.toggle("container-toggle");
+  container.forEach((dom) => {
+    dom.classList.toggle("container-toggle");
+  });
+  this.classList.toggle("btn-toggled");
+});
+
+// Settings
+navSettings.addEventListener("click", () => {
+  settingsMenu.classList.toggle("menu-active");
+});
+settingsMenuBtn.addEventListener("click", () => {
+  settingsMenu.classList.remove("menu-active");
+});
+designerSettings.forEach((el) => {
+  el.addEventListener("click", function () {
+    designerView = this.value;
+    //  newDesigners = filterNewDesigners(metrics_data.designer_data, 52);
+    // populateDropdown(designerSelect, newDesigners, false, designerView);
+    switch (designerView) {
+      case "all":
+        loadedDesigners = filterNewDesigners(metrics_data.designer_data);
+        populateDropdown(designerSelect, loadedDesigners);
+        break;
+      case "new":
+        loadedDesigners = filterNewDesigners(metrics_data.designer_data, 52);
+        populateDropdown(designerSelect, loadedDesigners);
+        break;
+    }
+  });
+});
+deleteDataBtn.addEventListener("click", () => {
+  localStorage.removeItem("metrics_data");
+});
+
+                </script>
+              

@@ -1,0 +1,145 @@
+
+                <script>
+              // need to have a common config file
+// this is the config for google appscript
+////// METRIC CONSTANTS ////////////
+const DESIGNER_STANDARD = "Avg Time per Standard";
+const DESIGNER_LAYOUT = "Avg Time per Standard - Layout";
+const DESIGNER_EDIT = "Avg Edit Time";
+const DESIGNER_NEW_AD_TIME = "Avg Time per New Ad";
+const RAMP_STANDARD = "Standard Time (Ramp Avg)";
+const RAMP_LAYOUT = "Layout Time (Ramp Avg)";
+const RAMP_EDIT = "Edit Times (Ramp Avg)";
+const RAMP_AD_TIME = "Ad Time (Ramp Avg)";
+const BENCHMARK_STANDARD = "standard_benchmark";
+const BENCHMARK_LAYOUT = "layout_benchmark";
+const BENCHMARK_EDIT = "edit_benchmark";
+const BENCHMARK_AD_TIME = "ad_time_benchmark";
+const TEAM_TICKET_RAMP_AVG = "Avg # of Tickets (Weighted, Ramp Avgs)";
+const DESIGNER_STANDARD_TICKETS = "Standard";
+const DESIGNER_LAYOUT_TICKETS = "Standard - Layout";
+const DESIGNER_SIMPLE_TICKETS = "Simple";
+const TEAM_AVG_STANDARD = "Standard Time - Team Avg";
+const TEAM_AVG_LAYOUT = "Layout Time - Team Avg";
+const TEAM_AVG_EDIT = "Avg Edit Time - Team Avg";
+const TEAM_AVG_TOTAL_ADS = "Total Ads - Team Avg";
+
+//// STAIC DATA ////////////
+const METRIC_BENCHMARK = {
+  standard_benchmark: 1.62,
+  layout_benchmark: 0.65,
+  edit_benchmark: 0.69,
+};
+
+///// QUALITY CONSTANTS ////////////
+const BEAMD_ALL_DATA = "ALL_DATA";
+const B_VAL = "B";
+const E_VAL = "E";
+const A_VAL = "A";
+const M_VAL = "M";
+const D_VAL = "D";
+// const B_VAL = "Does it adhere to the BRAND?";
+// const E_VAL = "Do you want to ENGAGE with this ad?";
+// const A_VAL = "How much does this ad grab your ATTENTION?";
+// const M_VAL = "Is there a clear MESSAGE?";
+// const D_VAL = "How is the DESIGN of this ad?";
+const BEAMD_DATE = "Date Closed";
+const BEAMD_IMPROVEMENT =
+  "What could be improved in this ad? [Select Any]";
+const BEAMD_GALLERY = "Gallery Link";
+
+
+// array of all Standard key names
+const METRICS_STANDARD_NAMES = [
+  DESIGNER_STANDARD,
+  RAMP_STANDARD,
+  BENCHMARK_STANDARD,
+];
+// array of all Layout key names
+const METRICS_LAYOUT_NAMES = [
+  DESIGNER_LAYOUT,
+  RAMP_LAYOUT,
+  BENCHMARK_LAYOUT,
+];
+// array of metric ad times
+const METRICS_AD_TIME_NAMES = [DESIGNER_NEW_AD_TIME, RAMP_AD_TIME];
+// array of metric num ads
+const METRICS_TOTAL_ADS = [
+  "Designer Ticket Unweighted",
+  TEAM_TICKET_RAMP_AVG,
+];
+// array of all Edit key names
+const METRICS_EDIT_NAMES = [DESIGNER_EDIT, RAMP_EDIT, BENCHMARK_EDIT];
+
+// Object of arrays for each Ad type to display
+const METRICS_NAMES = {
+  layout: METRICS_LAYOUT_NAMES,
+  standard: METRICS_STANDARD_NAMES,
+  edit: METRICS_EDIT_NAMES,
+  ad_time: METRICS_AD_TIME_NAMES,
+  total_ads: METRICS_TOTAL_ADS,
+};
+const METRICS_RAMP_LEGEND = {
+  layout: ["Team Ramp Average", "Benchmark"],
+  standard: ["Team Ramp Average", "Benchmark"],
+  edit: ["Team Ramp Average", "Benchmark"],
+  ad_time: ["Team Ramp Average"],
+  total_ads: ["Team Ramp Average"],
+};
+
+// Metrics Line chart Maximum Y-scale value based on data type
+const METRICS_LINE_SCALEOFFSET = {
+  standard: 1,
+  layout: 0.5,
+  edit: 0.4,
+  ad_time: 1,
+  total_ads: 1,
+};
+
+// config files relating to Metric Grouped Bar Chart
+const DESIGNER_TICKET_VALUES = {
+  [DESIGNER_STANDARD_TICKETS]: 1,
+  [DESIGNER_LAYOUT_TICKETS]: 2,
+  [DESIGNER_SIMPLE_TICKETS]: 3,
+};
+// key names relating to designers number of Standard, Layout, and Simple tickets
+const DESIGNER_TICKET_KEYNAMES = [
+  DESIGNER_STANDARD_TICKETS,
+  DESIGNER_LAYOUT_TICKETS,
+  DESIGNER_SIMPLE_TICKETS,
+];
+
+// metric card classnames
+const METRIC_CARD_CLASSNAMES = [
+  ".card.standard",
+  ".card.layout",
+  ".card.edit",
+];
+
+///////////////////////////////////
+///// Quality Data constants //////
+///////////////////////////////////
+const BEAMD_DESIGNER_KEYS = {
+  B: B_VAL,
+  E: E_VAL,
+  A: A_VAL,
+  M: M_VAL,
+  D: D_VAL,
+};
+
+
+// array of Metrics Table data
+const METRICS_TABLE_HEADERS = {
+  ad_time_designer: DESIGNER_NEW_AD_TIME,
+  ad_time_ramp: RAMP_AD_TIME,
+  standard_time_designer: DESIGNER_STANDARD,
+  standard_time_ramp: RAMP_STANDARD,
+  layout_time_designer: DESIGNER_LAYOUT,
+  layout_time_ramp: RAMP_LAYOUT,
+  edit_time_designer: DESIGNER_EDIT,
+  edit_time_ramp: RAMP_EDIT,
+  total_tickets_designer: DESIGNER_TICKET_KEYNAMES,
+  total_tickets_ramp: TEAM_TICKET_RAMP_AVG,
+};
+                </script>
+              

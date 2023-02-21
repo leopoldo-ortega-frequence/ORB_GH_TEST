@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Metrics Dashboard</title>
+    <!-- Google Fonts CSS -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.2/css/all.min.css"
+    />
+    <!-- Google Apps Script stylsheet -->
+    <?!= HtmlService.createHtmlOutputFromFile("app.css").getContent(); ?>
+  </head>
+  <body>
+    <!-- Main app wrapper -->
+    <div class="app-wrapper">
+      <!-- App Left Side -->
+      <div class="left-content">
+        <!-- Image + Collapse conainer -->
+        <div class="top">
+          <img
+            src="https://drive.google.com/uc?export=download&id=1du31iAIKJWbxs7IlcWi8DgxYutoa0-uc"
+          />
+        </div>
+        <!-- Nav Tab container -->
+        <!-- Nav Button Container -->
+        <div class="left-nav-container">
+          <div class="buttons">
+            <button class="data-btn active" value="metrics" id="metrics-btn">
+              Performance
+            </button>
+            <button class="data-btn" value="quality" id="quality-btn">
+              Quality
+            </button>
+            <button
+              class="data-btn"
+              disabled="disabled"
+              value="hygiene"
+              id="hygiene-btn"
+            >
+              Hygiene
+            </button>
+          </div>
+        </div>
+      </div>
+      <button class="left-content-btn">
+        <span class="chevron right"></span>
+        <span class="chevron right -ml-3"></span>
+      </button>
+
+      <!-- App Right Side -->
+      <div class="right-content">
+        <!-- Main Navigation -->
+        <!-- Navbar -Sticky -->
+        <nav>
+          <!-- Nav Header content -->
+          <div class="nav-header">
+            <h1>Onboarding Report Builder</h1>
+            <div id="input-designer-info"></div>
+          </div>
+
+          <!-- Navbar Container - Sticky -->
+          <div class="nav-container">
+            <!-- Form -->
+            <form>
+              <!-- Name input container -->
+              <div class="nav-input" id="designer-input-field">
+                <!-- Designer Name Input -->
+                <label for="designer">Designer Name</label>
+                <br />
+                <input
+                  type="text"
+                  class="input main-input"
+                  name="designer"
+                  id="designer-input"
+                  placeholder="Select a Designer"
+                />
+                <i class="fa-solid fa-chevron-up input-icon down"></i>
+                <ul
+                  style="display: none"
+                  class="designer-list"
+                  id="designer-select"
+                ></ul>
+                <!-- <input
+                  list="designer-select"
+                  name="designer"
+                  id="designer-input"
+                  class="input main-input"
+                  placeholder="Select a Designer"
+                />
+                <datalist
+                  name="designer"
+                  id="designer-select"
+                  class="input main-input"
+                >
+                  <option value="" disabled selected>Designer Name</option>
+                </datalist> -->
+              </div>
+              <!-- Date Input container -->
+              <!-- Start Date -->
+              <div class="nav-input">
+                <label for="start-date">Start Date: </label>
+                <br />
+                <input
+                  class="input main-input"
+                  type="date"
+                  name="start_date"
+                  id="start_date"
+                />
+              </div>
+              <!-- End Date -->
+              <div class="nav-input">
+                <label for="end-date">End Date: </label>
+                <br />
+                <input
+                  class="input main-input"
+                  type="date"
+                  name="end_date"
+                  id="end_date"
+                />
+              </div>
+            </form>
+          </div>
+          <!-- Nav options -->
+          <div class="nav-download">
+            <button class="nav-icon" id="nav-download">
+              <i class="fa-solid fa-circle-arrow-down"></i>
+            </button>
+          </div>
+          <div class="nav-settings">
+            <button class="nav-icon" id="nav-settings">
+              <i class="fa-solid fa-gear"></i>
+            </button>
+          </div>
+
+          <!-- collaps btn -->
+          <div class="nav-toggle-btn">
+            <i class="fa-solid fa-chevron-up"></i>
+            <i class="fa-solid fa-chevron-up"></i>
+          </div>
+        </nav>
+
+        <!-- Nav Settings -->
+        <!-- Setings Menu -->
+        <div class="settings-menu">
+          <div class="settings-container">
+            <h2>Settings</h2>
+            <div class="settings-data">
+              <button id="delete_data_btn">Clear Session</button>
+              <div>
+                <span>Deletes data stored locally</span>
+                <span id="data_last_update"></span>
+              </div>
+            </div>
+            <div class="designer-select-container">
+              <h4>Designer Dropdown Selection</h4>
+              <div class="settings-designer-select">
+                <input
+                  type="radio"
+                  class="settings-designer"
+                  name="designer-radio"
+                  checked="checked"
+                  value="new"
+                />
+                <label for="new">New Designers (less than 52 weeks)</label>
+              </div>
+              <div class="settings-designer-select">
+                <input
+                  type="radio"
+                  class="settings-designer"
+                  name="designer-radio"
+                  value="all"
+                />
+                <label for="all">All Designers</label>
+              </div>
+            </div>
+          </div>
+          <div class="menu-close">
+            <i class="fa-solid fa-xmark"></i>
+          </div>
+        </div>
+        <!-- Print PDF Menu -->
+        <div class="print-menu">
+          <h2>Print Menu</h2>
+          <h4>Choose the following sections to print</h4>
+          <form id="print-form"></form>
+          <button><i class="fa-solid fa-file-arrow-down"></i></button>
+        </div>
+
+        <!-- Main Page content - Metrics -->
+        <section id="overview" class="metrics">
+          <!-- Metrics content container -->
+          <div class="content-container">
+            <!-- Metrics Cards - glance container -->
+            <div id="Metrics_Glance" class="overflow-container">
+              <!-- Metrics Cards header -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <h4>
+                    <!-- Designer's name will dynamically be populated here -->
+                    <span
+                      class="designer-name"
+                      id="metrics-glance-subheader"
+                    ></span>
+                    Average Ad Times (Hours)
+                  </h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <button id="metric-card" class="section-btn">
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+                <!-- Metrics Card btn collaps -->
+              </div>
+              <!-- Metrics Card Component Container -->
+              <div class="overflow-content metric-card">
+                <!-- Card container  -->
+                <div class="outer-container">
+                  <!-- Card container -->
+                  <div class="inner-container">
+                    <!-- Card 1 -->
+                    <div id="card standard" class="metrics-card standard">
+                      <h3>Standard Ads</h3>
+                      <h2 id="card-standard-val">--</h2>
+                      <div id="metric-card-data" class="content"></div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div id="card layout" class="metrics-card layout">
+                      <h3>Layouts</h3>
+                      <h2 id="card-layout-val">--</h2>
+                      <div id="metric-card-data" class="content"></div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div id="card edit" class="metrics-card edit">
+                      <h3>Edits</h3>
+                      <h2 id="card-edit-val">--</h2>
+                      <div id="metric-card-data" class="content"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Metrics Number of Ads Container -->
+            <div id="Metrics_Ad_Times" class="overflow-container">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Number of Ads header -->
+                  <h4>
+                    <!-- Designer's name will dynamically be populated here -->
+                    <span class="designer-name"></span>
+                    Metrics - Number of Ads
+                  </h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metrics Number of Ads btn collapse -->
+                  <button id="metric-ads" class="section-btn">
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-content metric-ads">
+                <!-- Number of Ads cards -->
+                <div class="ad-cards-container">
+                  <div class="num-ad-card">
+                    <div class="content-left">
+                      <h3>Team Average</h3>
+                      <p>(Weighted)</p>
+                    </div>
+                    <div id="avg-tickets-weighted" class="ad-card-val">--</div>
+                  </div>
+                  <div class="num-ad-card">
+                    <div class="content-left">
+                      <h3>Designer's Total</h3>
+                      <p>(Weighted)</p>
+                    </div>
+                    <div id="des-tickets-weighted" class="ad-card-val">--</div>
+                  </div>
+                  <div class="num-ad-card">
+                    <div class="content-left">
+                      <h3>Designer's Total</h3>
+                      <p>(Actual)</p>
+                    </div>
+                    <div id="des-tickets-actual" class="ad-card-val">--</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Container for Ad Times Charts -->
+            <div id="Metrics_Tickets" class="overflow-container">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Ad Times Chart Title -->
+                  <h4>
+                    <span class="designer-name"></span>
+                    Ramp Chart - Number of Ads
+                  </h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metrics Ad Times chart collapse -->
+                  <button id="metric-ticket-chart" class="section-btn">
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-content chart metric-ticket-chart">
+                <!-- Ad Tickets  Chart container -->
+                <div class="chart-container">
+                  <!-- Ad Tickets Chart Tab Buttons container -->
+                  <div class="tabs-container">
+                    <!-- Ad Tickets Chart Tab form -->
+                    <form>
+                      <button
+                        class="metric-ad-btn chart-btn-active"
+                        id="weighted"
+                      >
+                        Weighted
+                      </button>
+                      <button class="metric-ad-btn" id="unweighted">
+                        Unweighted
+                      </button>
+                    </form>
+                  </div>
+                  <!-- SVG chart container -->
+                  <div class="svg-container" id="svg-metric-ad-graph"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Container for Ramp Component -->
+            <div id="Metrics_Ticket_Chart" class="overflow-container">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Ramp Chart Title -->
+                  <h4>
+                    <span class="designer-name" id="ramp-designer"> </span>
+                    Ramp Charts - Ad Times
+                  </h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metric Ramp chart collapse -->
+                  <button id="metric-ramp-chart" class="section-btn">
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-content chart metric-ramp-chart">
+                <!-- Ramp Chart container -->
+                <div class="chart-container">
+                  <!-- Ramp Chart Tab Buttons container -->
+                  <div class="tabs-container">
+                    <!-- Ramp Chart Tab form -->
+                    <form>
+                      <button
+                        class="ramp-btn chart-btn chart-btn-active"
+                        id="standard"
+                      >
+                        Standard Ads
+                      </button>
+                      <button class="ramp-btn chart-btn" id="layout">
+                        Layout Ads
+                      </button>
+                      <button class="ramp-btn chart-btn" id="edit">
+                        Edits
+                      </button>
+                      <button class="ramp-btn chart-btn" id="ad_time">
+                        Average Ad Times
+                      </button>
+                    </form>
+                  </div>
+                  <!-- SVG chart container -->
+                  <div class="svg-container" id="svg-metric-graph"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Container for Designer Table Data -->
+            <div id="Metrics_Ramp_Chart" class="overflow-container">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Ramp Chart Title -->
+                  <h4>
+                    <span class="designer-name" id="ramp-designer"> </span>
+                    Detailed Ramp Data
+                  </h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metric Ramp chart collapse -->
+                  <button
+                    id="metrics-table"
+                    class="section-btn metric-table-component-btn section-btn-toggle"
+                  >
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-content metrics-table section-hide">
+                <!-- Container for Metrics table -->
+                <div class="table-container">
+                  <!-- Main Header -->
+                  <!-- Secondary Header -->
+                  <div class="grid-row header-main">
+                    <div>
+                      <span>Week</span>
+                    </div>
+                    <div>
+                      <span>Average Ad Time</span>
+                    </div>
+                    <div>
+                      <span>Standard Time</span>
+                    </div>
+                    <div>
+                      <span>Layout Time</span>
+                    </div>
+                    <div>
+                      <span>Edit Time</span>
+                    </div>
+                    <div>
+                      <span>Total Ads</span>
+                    </div>
+                  </div>
+                  <div class="grid-row body header-sub">
+                    <div class="week-col">
+                      <span></span>
+                    </div>
+                    <div>
+                      <span class="designer-name">Designer</span>
+                      <span>Ramp Avg</span>
+                    </div>
+                    <div>
+                      <span class="designer-name">Designer</span>
+                      <span>Ramp Avg</span>
+                    </div>
+                    <div>
+                      <span class="designer-name">Designer</span>
+                      <span>Ramp Avg</span>
+                    </div>
+                    <div>
+                      <span class="designer-name">Designer</span>
+                      <span>Ramp Avg</span>
+                    </div>
+                    <div class="ads-table">
+                      <div>
+                        <span class="designer-name">Designer </span>
+                        <span>(Unweighted)</span>
+                      </div>
+                      <div>
+                        <span class="designer-name">Kanye W </span>
+                        <span>(Weighted)</span>
+                      </div>
+                      <span>Ramp Avg</span>
+                    </div>
+                  </div>
+                  <!-- Dynamic table information goes here -->
+                  <div class="grid-row body">
+                    <div class="week-col">
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div class="ads-table">
+                      <span>--</span>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                  </div>
+                  <div class="grid-row body">
+                    <div class="week-col">
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div class="ads-table">
+                      <span>--</span>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                  </div>
+                  <div class="grid-row body">
+                    <div class="week-col">
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div class="ads-table">
+                      <span>--</span>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                  </div>
+                  <div class="grid-row body">
+                    <div class="week-col">
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                    <div class="ads-table">
+                      <span>--</span>
+                      <span>--</span>
+                      <span>--</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ///////////////////////////////////////////////////////////////////////////////////////////////////// -->
+        <!-- ///////////////////////////////////////////////////////////////////////////////////////////////////// -->
+        <!-- Main Page content - Quality -->
+        <!-- ///////////////////////////////////////////////////////////////////////////////////////////////////// -->
+        <!-- ///////////////////////////////////////////////////////////////////////////////////////////////////// -->
+        <section class="hidden quality" id="overview">
+          <!-- main wrapper for page content -->
+          <div class="content-container">
+            <!-- Quality Card Grade Section -->
+            <div id="Quality_Grade_Cards" class="overflow-container">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Ramp Chart Title -->
+                  <h4><span class="designer-name"></span> Design Grade</h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metric Ramp chart collapse -->
+                  <button id="quality-grade-cards" class="section-btn">
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="overflow-content quality-grade-cards content grid-2-1"
+              >
+                <div class="card grade">
+                  <h3><span class="designer-name"></span> Design Grade</h3>
+                  <h1 id="beamd-design-grade">--</h1>
+                  <div id="beamd-design-delta">
+                    <div class="delta up"></div>
+                  </div>
+                </div>
+                <div class="card grade">
+                  <h3>Number of Ads Reviewed</h3>
+                  <h1 id="beamd-num-tickets">--</h1>
+                  <p>From <span class="header-dates"></span></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quality Chart's section -->
+            <div id="Quality_BEAM_Chart" class="overflow-container">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Ramp Chart Title -->
+                  <h4>
+                    <span class="designer-name"></span> BEAMD Grade by Category
+                  </h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metric Ramp chart collapse -->
+                  <button id="quality-charts" class="section-btn">
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-content quality-charts">
+                <div class="chart-container">
+                  <!-- Ramp Chart Tab Buttons container -->
+                  <div class="tabs-container">
+                    <!-- Ramp Chart Tab form -->
+                    <form>
+                      <button
+                        class="beam-btn chart-btn chart-btn-active"
+                        id="overall"
+                      >
+                        Overall Grade
+                      </button>
+                      <button class="beam-btn chart-btn" id="time_range">
+                        Grade in Time Range
+                      </button>
+                    </form>
+                  </div>
+                  <!-- SVG chart container -->
+                  <div class="svg-container" id="svg-beam-graph"></div>
+                </div>
+                <!-- <div class="card" id="overall-chart"></div>
+                <div class="card" id="time-chart"></div> -->
+              </div>
+            </div>
+
+            <!-- Collapsable Table Section -->
+            <!-- Container for Designer Table Data -->
+            <div id="Metrics_Comparison_Table" class="overflow-container">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Ramp Chart Title -->
+                  <h4>
+                    <span class="designer-name" id="ramp-designer"> </span>
+                    Detailed BEAMD Data
+                  </h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metric Ramp chart collapse -->
+                  <button
+                    id="quality-table"
+                    class="section-btn section-btn-toggle"
+                  >
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-content quality-table section-hide">
+                <!-- Container for Metrics table -->
+                <div class="table-container">
+                  <!-- Main Header -->
+                  <div class="table-header">
+                    <div class="grid-row">
+                      <div></div>
+                      <div>Brand</div>
+                      <div>Engagement</div>
+                      <div>Attention</div>
+                      <div>Message</div>
+                      <div>Design</div>
+                    </div>
+                  </div>
+                  <div id="table-content">
+                    <div class="grid-row">
+                      <div>Avg Within Date Range</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                    </div>
+                    <div class="grid-row">
+                      <div>Overall Grade</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                    </div>
+                    <div class="grid-row">
+                      <div>Team's Overall Average</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                      <div>--</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ads for Improvement Section -->
+            <div id="Quality_Grade_Categories" class="overflow-container">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Ramp Chart Title -->
+                  <h4>
+                    <span class="designer-name"></span> Ads for Improvement
+                  </h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metric Ramp chart collapse -->
+                  <button id="quality-grade-categories" class="section-btn">
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="overflow-content quality-grade-categories content grid-1-2"
+              >
+                <!-- <i class="fa-regular fa-calendar"></i> -->
+                <div class="card category">
+                  <!-- Header -->
+                  <div class="table-row category_qty">
+                    <span>Ads for Improvement</span>
+                    <span>Qty</span>
+                  </div>
+                  <!-- Content -->
+                  <div id="ad-improvement-content" class="card-content">
+                    <!-- <div class="table-row category_qty">
+                      <span>type</span>
+                      <span>3</span>
+                    </div> -->
+                  </div>
+                </div>
+
+                <div class="card category">
+                  <!-- Header -->
+                  <div class="table-row category_ad">
+                    <span>Ad Link</span>
+                    <span>Area of Improvement Category</span>
+                  </div>
+                  <!-- Content -->
+                  <div id="improvement-content" class="card-content">
+                    <!-- <div class="table-row category_ad">
+                      <span>Ad Link</span>
+                      <span>Area of Improvement Category</span>
+                    </div> -->
+                  </div>
+                </div>
+                <!-- <div id="exceptional-card" class="card category hidden">
+                  <h3>Exceptional Ads</h3>
+                  <div id="exceptional-content" class="card-content"></div>
+                </div> -->
+                <div id="no-grade-data">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>No Data In That Date Range</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Exceptional Ads Section -->
+            <div id="Quality_Excepional_Ads" class="overflow-container half">
+              <!-- Section Nav -->
+              <div class="metrics-section-header">
+                <div class="header-left">
+                  <!-- Metrics Ramp Chart Title -->
+                  <h4><span class="designer-name"></span> Exceptional Ads</h4>
+                </div>
+                <div class="header-right">
+                  <span class="header-dates"></span>
+                  <!-- Metric Ramp chart collapse -->
+                  <button id="section-exceptional-ads" class="section-btn">
+                    <span class="chevron down"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-content section-exceptional-ads content">
+                <div class="card category">
+                  <!-- Header -->
+                  <div class="table-row category_exceptional">
+                    <span>Category</span>
+                    <span>Ad Link</span>
+                  </div>
+                  <!-- Content -->
+                  <div id="exceptional-ads" class="card-content">
+                    <!-- <div class="table-row category_exceptional">
+                      <span>Ad Link</span>
+                      <span>Link</span>
+                    </div> -->
+                  </div>
+                </div>
+                <div id="no-grade-data">
+                  <i class="fa-solid fa-triangle-exclamation"></i>
+                  <span>No Data In That Date Range</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Main Page content - Hygiene -->
+        <section class="hidden hygiene" id="overview"></section>
+      </div>
+    </div>
+    <!-- Components that are used outside the app wrapper -->
+    <!-- Loading section -->
+    <div id="loader">
+      <div class="loading">
+        <div class="loading__square"></div>
+        <div class="loading__square"></div>
+        <div class="loading__square"></div>
+        <div class="loading__square"></div>
+        <div class="loading__square"></div>
+        <div class="loading__square"></div>
+        <div class="loading__square"></div>
+      </div>
+      <span>Fetching Data</span>
+    </div>
+    <!-- Error Box -->
+    <div id="snackbar"></div>
+    <!-- Javascript links -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image/2.6.0/dom-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.3.4/jspdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Javascript main Index -->
+    <!-- Google Appscript psuedo JS files -->
+    <?!= HtmlService.createHtmlOutputFromFile("config.js").getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile("index.js").getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile("utils.js").getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile("loader.js").getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile("Metrics.js").getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile("Quality.js").getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile("GroupedBarChart.js").getContent() ?>
+    <?!= HtmlService.createHtmlOutputFromFile("MultipleLineChart.js").getContent() ?>
+  </body>
+</html>

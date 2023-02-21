@@ -1,0 +1,280 @@
+
+                <script>
+              class GroupedBarChart {
+  constructor(props) {
+    this.data = props.data;
+    this.chartTitle = props.chartTitle;
+    this.container = props.container;
+    this.xProp = props.xProp;
+    this.yProp = props.yProp;
+    this.xLabel = props.xLabel;
+    this.yLabel = props.yLabel;
+    this.selectedGroup = props.selectedGroup;
+    this.svgHeight = props.svgHeight;
+    this.svgWidth = props.svgWidth;
+    this.chartWidth = props.chartWidth;
+    this.chartHeight = props.chartHeight;
+    this.showBackgroundColor = props.showBackgroundColor;
+    this.tickLines = props.tickLines;
+    this.hideLegend = props.hideLegend;
+    this.barPadding = props.barPadding;
+    this.subgroups = props.subgroups;
+    this.yAxisLimit = props.yAxisLimit;
+    this.legendKeys = props.legendKeys;
+    this.tooltipKey = props.tooltipKey;
+
+    this.init();
+  }
+
+  init() {
+    // Initlializing
+    this.margin = { top: 20, right: 30, bottom: 20, left: 50 };
+    this.width = this.svgWidth - this.margin.left - this.margin.right;
+    this.height = this.svgHeight - this.margin.top - this.margin.bottom;
+    this.colorRange = ["primary", "secondary", "tertiary", "quaternary"];
+
+    this.update();
+  }
+
+  update(updatedValues) {
+    if (updatedValues) {
+      const { selected, newGroup, newData, legendKeys } = updatedValues;
+      selected ? (this.selectedGroup = selected) : "";
+      newGroup ? (this.subgroups = newGroup) : "";
+      newData ? (this.data = newData) : "";
+      legendKeys ? (this.legendKeys = legendKeys) : "";
+    }
+    // clear previous chart
+    d3.select(`${this.container} svg`).remove();
+    // calcDesignerValue();
+    // may want to pass an arguent that allows for different data display
+    this.render();
+  }
+
+  render() {
+    const ctx = this;
+    // ----------------
+    // Create a tooltip
+    // ----------------
+    this.tooltip = d3
+      //.select(this.container)
+      .select("body")
+      .append("div")
+      .attr("class", "bar-tooltip");
+    // Get container size
+    // the data that each bar within a group will be using
+    // const subgroups = [
+    //   TEAM_TICKET_RAMP_AVG,
+    //   selectedGroup,
+    //   // selectedGroup
+    // ];
+    const groups = this.data.map((d) => d[this.xProp]);
+
+    const svg = d3
+      .select(this.container)
+      .append("svg")
+      .attr("width", this.width + this.margin.left + this.margin.right)
+      .attr("height", this.height + this.margin.top + this.margin.bottom)
+      .append("g")
+      .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
+    const chartG = svg
+      .append("g")
+      .attr("class", "chart-group")
+      .attr("transform", `translate(80,70)`);
+    const legendG = svg
+      .append("g")
+      .attr("class", "legend-group")
+      .attr(
+        "transform",
+        `translate(${this.chartWidth + 150}, ${this.height / 2.5})`
+      );
+    const title = svg
+      .append("text")
+      .attr("text-anchor", "middle")
+      .attr("x", this.width / 2)
+      .attr("y", 20)
+      .attr("class", "chart-title")
+      .text(this.chartTitle);
+    // X axis
+    const x = d3
+      .scaleBand()
+      .domain(groups)
+      .range([0, this.chartWidth])
+      .padding([0.2]);
+    const xAxisCall = chartG
+      .append("g")
+      .attr("transform", `translate(0, ${this.chartHeight})`)
+      .attr("class", "x-axis")
+      .call(d3.axisBottom(x).tickSize(0).tickPadding(10));
+
+    if (this.xLabel) {
+      xAxisCall
+        .append("text")
+        .attr("class", "line-chart-label")
+        .attr("x", this.chartWidth / 2)
+        .attr("y", 60)
+        .attr("text-anchor", "middle")
+        .text(this.xLabel);
+    }
+
+    // Add Y axis
+    const max1 = d3.max(this.data, (d) => d[this.yProp]);
+    const max2 = d3.max(this.data, (d) => d[this.selectedGroup]); // <-- this will
+    const maxYVal = max1 > max2 ? Math.round(max1) + 1 : Math.round(max2) + 1;
+    const y = d3
+      .scaleLinear()
+      .domain([0, this.yAxisLimit ? this.yAxisLimit : maxYVal])
+      .range([this.chartHeight, 0]);
+    const yGridLine = chartG
+      .append("g")
+      .attr("class", "y-grid-line")
+      .call(
+        d3
+          .axisLeft(y)
+          .ticks(3)
+          .tickSize(this.tickLines ? -this.chartWidth : 0)
+          .tickFormat("")
+      );
+    chartG.append("g").call(d3.axisLeft(y).ticks(3));
+
+    if (this.yLabel) {
+      chartG
+        .append("text")
+        .attr("class", "line-chart-label")
+        .attr("y", -50)
+        .attr("x", -this.chartHeight / 2)
+        .attr("transform", `rotate(-90)`)
+        .attr("text-anchor", "middle")
+        .text(this.yLabel);
+    }
+
+    // Another scale for subgroup position?
+    const xSubgroup = d3
+      .scaleBand()
+      .domain(this.subgroups)
+      .range([0, x.bandwidth()])
+      .padding([this.barPadding]);
+
+    // create rectangle backgrand
+    if (this.showBackgroundColor) {
+      chartG
+        .append("g")
+        .selectAll("g")
+        // Enter in data = loop group per group
+        .data(this.data)
+        .join("g")
+        .attr("transform", (d) => `translate(${x(d[this.xProp])}, 0)`)
+        .selectAll("rect")
+        .data((d) => {
+          return this.subgroups.map(function (key) {
+            return { key: key, value: d[key] };
+          });
+        })
+        .join("rect")
+        .attr("x", (d) => xSubgroup(d.key))
+        .attr("y", 0)
+        .attr("width", xSubgroup.bandwidth())
+        .attr("height", this.chartHeight)
+        .attr("class", (d, i) => `fill-light-grey`);
+    }
+
+    // Show the bars
+    chartG
+      .append("g")
+      .selectAll("g")
+      // Enter in data = loop group per group
+      .data(this.data)
+      .join("g")
+      .attr("transform", (d) => `translate(${x(d[this.xProp])}, 0)`)
+      .selectAll("rect")
+      .data((d) => {
+        return this.subgroups.map(function (key) {
+          return { key: key, value: d[key] };
+        });
+      })
+      .join("rect")
+      .attr("x", (d) => xSubgroup(d.key))
+      .attr("y", (d) => y(d.value))
+      .attr("width", xSubgroup.bandwidth())
+      .attr("height", (d) => this.chartHeight - y(d.value))
+      .attr("class", (d, i) => `fill-${this.colorRange[i]}`)
+      .on("mousemove", (event, i) => {
+        if (event.target.classList.contains("fill-primary")) {
+          this.tooltip
+            .html(
+              `<span>${this.tooltipKey}: </span><span>${Math.round(
+                i.value
+              )}</span>`
+            )
+            .style("left", event.pageX + 10 + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+            .style("top", event.pageY + "px")
+            .style("opacity", 1);
+        }
+      })
+      .on("mouseleave", () => {
+        //ctx.mouseleave(ctx);
+        this.tooltip.style("opacity", 0);
+      });
+
+    // render legend chart
+    if (!this.hideLegend) {
+      this.renderLegend(legendG, this.legendKeys);
+    }
+  }
+  // renders the legend <-- doing it manuallly, may make more dynamic
+  renderLegend(container, categories) {
+    const legendRow = container
+      .selectAll(".legend-data")
+      .data(categories, (d) => d);
+
+    // // this enters() the data, therefore it is the parent container for where changes need to take place
+    const enterLegend = legendRow
+      .enter()
+      .append("g")
+      .attr("class", "legend-data")
+      .attr("transform", (d, i) => {
+        return `translate(0, ${i * 45})`;
+      })
+      .merge(legendRow);
+
+    // append colored legend square
+    enterLegend
+      .append("rect")
+      .attr("width", 30)
+      .attr("height", 30)
+      .attr("class", (d, i) => `legend-data fill-${this.colorRange[i]}`);
+
+    // append legend text
+    enterLegend
+      .append("text")
+      .attr("class", "legend-data")
+      .attr("x", 40)
+      .attr("y", 20)
+      .attr("text-anchor", "start")
+      .text((d) => {
+        return d;
+      });
+  }
+
+  // Three function that change the tooltip when user hover / move / leave a cell
+  mouseover(ctx) {
+    // var subgroupName = d3.select(this.parentNode).datum().key;
+    // var subgroupValue = d.data[subgroupName];
+    this.tooltip
+      .html(
+        "subgroup: " + "subgroup_name" + "<br>" + "Value: " + "subgroup_Value"
+      )
+      .style("opacity", 1);
+  }
+  mousemove(ctx, el, x, y) {
+    this.tooltip
+      .style("left", d3.pointer(event, el)[0] + 90 + "px") // It is important to put the +90: other wise the tooltip is exactly where the point is an it creates a weird effect
+      .style("top", d3.pointer(event, el)[1] + "px");
+  }
+  mouseleave(ctx) {
+    this.tooltip.style("opacity", 0);
+  }
+}
+
+                </script>
+              
